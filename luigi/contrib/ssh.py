@@ -198,11 +198,7 @@ class RemoteFileSystem(luigi.target.FileSystem):
         """
         Remove file or directory at location `path`.
         """
-        if recursive:
-            cmd = ["rm", "-r", path]
-        else:
-            cmd = ["rm", path]
-
+        cmd = ["rm", "-r", path] if recursive else ["rm", path]
         self.remote_context.check_output(cmd)
 
     def mkdir(self, path, parents=True, raise_if_exists=False):
@@ -214,11 +210,7 @@ class RemoteFileSystem(luigi.target.FileSystem):
             else:
                 return
 
-        if parents:
-            cmd = ['mkdir', '-p', path]
-        else:
-            cmd = ['mkdir', path, '2>&1']
-
+        cmd = ['mkdir', '-p', path] if parents else ['mkdir', path, '2>&1']
         try:
             self.remote_context.check_output(cmd)
         except subprocess.CalledProcessError as e:

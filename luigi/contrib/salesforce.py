@@ -211,20 +211,17 @@ class QuerySalesforce(Task):
         """
         Merges the resulting files of a multi-result batch bulk query.
         """
-        outfile = open(self.output().path, 'w')
-
-        if self.content_type.lower() == 'csv':
-            for i, result_id in enumerate(result_ids):
-                with open("%s.%d" % (self.output().path, i), 'r') as f:
-                    header = f.readline()
-                    if i == 0:
-                        outfile.write(header)
-                    for line in f:
-                        outfile.write(line)
-        else:
-            raise Exception("Batch result merging not implemented for %s" % self.content_type)
-
-        outfile.close()
+        with open(self.output().path, 'w') as outfile:
+            if self.content_type.lower() == 'csv':
+                for i, result_id in enumerate(result_ids):
+                    with open("%s.%d" % (self.output().path, i), 'r') as f:
+                        header = f.readline()
+                        if i == 0:
+                            outfile.write(header)
+                        for line in f:
+                            outfile.write(line)
+            else:
+                raise Exception("Batch result merging not implemented for %s" % self.content_type)
 
 
 class SalesforceAPI:
@@ -344,9 +341,7 @@ class SalesforceAPI:
         fields = get_soql_fields(query)
 
         # put fields and first page of results into a temp list to be written to TempFile
-        tmp_list = [fields]
-        tmp_list.extend(parse_results(fields, response))
-
+        tmp_list = [fields, *parse_results(fields, response)]
         tmp_dir = luigi.configuration.get_config().get('salesforce', 'local-tmp-dir', None)
         tmp_file = tempfile.TemporaryFile(mode='a+b', dir=tmp_dir)
 
@@ -407,8 +402,7 @@ class SalesforceAPI:
         response.raise_for_status()
 
         root = ET.fromstring(response.text)
-        job_id = root.find('%sid' % self.API_NS).text
-        return job_id
+        return root.find('%sid' % self.API_NS).text
 
     def get_job_details(self, job_id):
         """
@@ -480,8 +474,7 @@ class SalesforceAPI:
         response.raise_for_status()
 
         root = ET.fromstring(response.text)
-        batch_id = root.find('%sid' % self.API_NS).text
-        return batch_id
+        return root.find('%sid' % self.API_NS).text
 
     def block_on_batch(self, job_id, batch_id, sleep_time_seconds=5, max_wait_time_seconds=-1):
         """
@@ -526,9 +519,7 @@ class SalesforceAPI:
         response.raise_for_status()
 
         root = ET.fromstring(response.text)
-        result_ids = [r.text for r in root.findall('%sresult' % self.API_NS)]
-
-        return result_ids
+        return [r.text for r in root.findall('%sresult' % self.API_NS)]
 
     def get_batch_result(self, job_id, batch_id, result_id):
         """
@@ -616,23 +607,20 @@ class SalesforceAPI:
         return "%s/%s" % (self._get_batch_results_url(job_id, batch_id), result_id)
 
     def _get_login_headers(self):
-        headers = {
+        return {
             'Content-Type': "text/xml; charset=UTF-8",
             'SOAPAction': 'login'
         }
-        return headers
 
     def _get_session_headers(self):
-        headers = {
+        return {
             'X-SFDC-Session': self.session_id
         }
-        return headers
 
     def _get_norm_session_headers(self):
-        headers = {
+        return {
             'Authorization': 'Bearer %s' % self.session_id
         }
-        return headers
 
     def _get_rest_headers(self):
         headers = self._get_norm_session_headers()

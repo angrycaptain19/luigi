@@ -111,13 +111,13 @@ class LocalFileSystem(FileSystem):
         try:
             os.rename(old_path, new_path)
         except OSError as err:
-            if err.errno == errno.EXDEV:
-                new_path_tmp = '%s-%09d' % (new_path, random.randint(0, 999999999))
-                shutil.copy(old_path, new_path_tmp)
-                os.rename(new_path_tmp, new_path)
-                os.remove(old_path)
-            else:
+            if err.errno != errno.EXDEV:
                 raise err
+
+            new_path_tmp = '%s-%09d' % (new_path, random.randint(0, 999999999))
+            shutil.copy(old_path, new_path_tmp)
+            os.rename(new_path_tmp, new_path)
+            os.remove(old_path)
 
     def rename_dont_move(self, path, dest):
         """

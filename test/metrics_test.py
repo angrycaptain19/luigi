@@ -32,8 +32,8 @@ class TestMetricsCollectors(unittest.TestCase):
         assert type(output) is metrics.NoMetricsCollector
 
     def test_other_value(self):
-        collector = 'junk'
-
         with self.assertRaises(ValueError) as context:
+            collector = 'junk'
+
             metrics.MetricsCollectors.get(collector)
             assert ("MetricsCollectors value ' junk ' isn't supported") in str(context.exception)

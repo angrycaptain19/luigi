@@ -780,7 +780,11 @@ class TimeDeltaParameter(Parameter):
         keys = ["weeks", "days", "hours", "minutes", "seconds"]
         # Give the digits a regex group name from the keys, then look for text with the first letter of the key,
         # optionally followed by the rest of the word, with final char (the "s") optional
-        regex = "".join([r"((?P<%s>\d+) ?%s(%s)?(%s)? ?)?" % (k, k[0], k[1:-1], k[-1]) for k in keys])
+        regex = "".join(
+            r"((?P<%s>\d+) ?%s(%s)?(%s)? ?)?" % (k, k[0], k[1:-1], k[-1])
+            for k in keys
+        )
+
         return self._apply_regex(regex, input)
 
     def parse(self, input):
@@ -808,8 +812,7 @@ class TimeDeltaParameter(Parameter):
         hours = x.seconds // 3600
         minutes = (x.seconds % 3600) // 60
         seconds = (x.seconds % 3600) % 60
-        result = "{} w {} d {} h {} m {} s".format(weeks, days, hours, minutes, seconds)
-        return result
+        return "{} w {} d {} h {} m {} s".format(weeks, days, hours, minutes, seconds)
 
     def _warn_on_wrong_param_type(self, param_name, param_value):
         if self.__class__ != TimeDeltaParameter:

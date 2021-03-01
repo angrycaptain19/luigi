@@ -186,12 +186,12 @@ class ReadableAzureBlobFile:
         return self.client.download_as_bytes(self.container, self.blob, n)
 
     def __enter__(self):
-        if self.download_when_reading:
-            self.client.download_as_file(self.container, self.blob, self.download_file_location)
-            self.fid = open(self.download_file_location)
-            return self.fid
-        else:
+        if not self.download_when_reading:
             return self
+
+        self.client.download_as_file(self.container, self.blob, self.download_file_location)
+        self.fid = open(self.download_file_location)
+        return self.fid
 
     def __exit__(self, exc_type, exc, traceback):
         self.close()
@@ -202,10 +202,13 @@ class ReadableAzureBlobFile:
             os.remove(self.download_file_location)
 
     def close(self):
-        if self.download_when_reading:
-            if self.fid is not None and not self.fid.closed:
-                self.fid.close()
-                self.fid = None
+        if (
+            self.download_when_reading
+            and self.fid is not None
+            and not self.fid.closed
+        ):
+            self.fid.close()
+            self.fid = None
 
     def readable(self):
         return True

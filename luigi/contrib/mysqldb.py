@@ -113,14 +113,13 @@ class MySqlTarget(luigi.Target):
         return row is not None
 
     def connect(self, autocommit=False):
-        connection = mysql.connector.connect(user=self.user,
+        return mysql.connector.connect(user=self.user,
                                              password=self.password,
                                              host=self.host,
                                              port=self.port,
                                              database=self.database,
                                              autocommit=autocommit,
                                              **self.cnx_kwargs)
-        return connection
 
     def create_marker_table(self):
         """
@@ -144,9 +143,7 @@ class MySqlTarget(luigi.Target):
                 .format(marker_table=self.marker_table)
             )
         except mysql.connector.Error as e:
-            if e.errno == errorcode.ER_TABLE_EXISTS_ERROR:
-                pass
-            else:
+            if e.errno != errorcode.ER_TABLE_EXISTS_ERROR:
                 raise
         connection.close()
 
@@ -190,8 +187,8 @@ class CopyToTable(rdbms.CopyToTable):
         )
 
     def copy(self, cursor, file=None):
-        values = '({})'.format(','.join(['%s' for i in range(len(self.columns))]))
-        columns = '({})'.format(','.join([c[0] for c in self.columns]))
+        values = '({})'.format(','.join('%s' for i in range(len(self.columns))))
+        columns = '({})'.format(','.join(c[0] for c in self.columns))
         query = 'INSERT INTO {} {} VALUES {}'.format(self.table, columns, values)
         rows = []
 
@@ -212,7 +209,7 @@ class CopyToTable(rdbms.CopyToTable):
 
         Normally you don't want to override this.
         """
-        if not (self.table and self.columns):
+        if not self.table or not self.columns:
             raise Exception("table and columns need to be specified")
 
         connection = self.output().connect()
@@ -230,13 +227,12 @@ class CopyToTable(rdbms.CopyToTable):
                 if self.enable_metadata_columns:
                     self.post_copy_metacolumns(cursor)
             except Error as err:
-                if err.errno == errorcode.ER_NO_SUCH_TABLE and attempt == 0:
-                    # if first attempt fails with "relation not found", try creating table
-                    # logger.info("Creating table %s", self.table)
-                    connection.reconnect()
-                    self.create_table(connection)
-                else:
+                if err.errno != errorcode.ER_NO_SUCH_TABLE or attempt != 0:
                     raise
+                # if first attempt fails with "relation not found", try creating table
+                # logger.info("Creating table %s", self.table)
+                connection.reconnect()
+                self.create_table(connection)
             else:
                 break
 

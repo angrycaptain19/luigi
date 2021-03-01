@@ -36,11 +36,11 @@ class NonYieldingTask(RunOnceTask):
         *None*. The tests in this file check if and which attributes are present at different times,
         e.g. while running, or before and after a dynamic dependency was yielded.
         """
-        attrs = set()
-        for attr in FORWARDED_ATTRIBUTES:
-            if getattr(self, attr, None) is not None:
-                attrs.add(attr)
-        return attrs
+        return {
+            attr
+            for attr in FORWARDED_ATTRIBUTES
+            if getattr(self, attr, None) is not None
+        }
 
     def run(self):
         # store names of forwarded attributes which are only available within the run method

@@ -130,7 +130,7 @@ class Register(abc.ABCMeta):
         :return:  an ``dict`` of task_family -> class
         """
         # We have to do this on-demand in case task names have changed later
-        reg = dict()
+        reg = {}
         for task_cls in cls._reg:
             if not task_cls._visible_in_registry:
                 continue
@@ -197,13 +197,13 @@ class Register(abc.ABCMeta):
     @staticmethod
     def _editdistance(a, b):
         """ Simple unweighted Levenshtein distance """
-        r0 = range(0, len(b) + 1)
+        r0 = range(len(b) + 1)
         r1 = [0] * (len(b) + 1)
 
-        for i in range(0, len(a)):
+        for i in range(len(a)):
             r1[0] = i + 1
 
-            for j in range(0, len(b)):
+            for j in range(len(b)):
                 c = 0 if a[i] is b[j] else 1
                 r1[j + 1] = min(r1[j] + 1, r0[j + 1] + 1, r0[j] + c)
 

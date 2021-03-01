@@ -52,9 +52,9 @@ class HdfsAtomicWritePipe(luigi.format.OutputPipeProcessWrapper):
             if exists(self.path):
                 remove(self.path)
         except Exception as ex:
-            if isinstance(ex, HDFSCliError) or ex.args[0].contains("FileNotFoundException"):
-                pass
-            else:
+            if not isinstance(ex, HDFSCliError) and not ex.args[0].contains(
+                "FileNotFoundException"
+            ):
                 raise ex
         if not all(result['result'] for result in rename(self.tmppath, self.path) or []):
             raise HdfsAtomicWriteError('Atomic write to {} failed'.format(self.path))
@@ -83,9 +83,9 @@ class HdfsAtomicWriteDirPipe(luigi.format.OutputPipeProcessWrapper):
             if exists(self.path):
                 remove(self.path)
         except Exception as ex:
-            if isinstance(ex, HDFSCliError) or ex.args[0].contains("FileNotFoundException"):
-                pass
-            else:
+            if not isinstance(ex, HDFSCliError) and not ex.args[0].contains(
+                "FileNotFoundException"
+            ):
                 raise ex
 
         # it's unlikely to fail in this way but better safe than sorry

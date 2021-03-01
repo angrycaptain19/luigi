@@ -198,8 +198,7 @@ def flatten(sequence):
     """
     for item in sequence:
         if hasattr(item, "__iter__") and not isinstance(item, str) and not isinstance(item, bytes):
-            for i in item:
-                yield i
+            yield from item
         else:
             yield item
 
@@ -688,18 +687,17 @@ class BaseHadoopJobTask(luigi.Task):
         pass
 
     def jobconfs(self):
-        jcs = []
-        jcs.append('mapred.job.name=%s' % self)
+        jcs = ['mapred.job.name=%s' % self]
         if self.mr_priority != NotImplemented:
             jcs.append('mapred.job.priority=%s' % self.mr_priority())
         pool = self._get_pool()
         if pool is not None:
             # Supporting two schedulers: fair (default) and capacity using the same option
             scheduler_type = configuration.get_config().get('hadoop', 'scheduler', 'fair')
-            if scheduler_type == 'fair':
-                jcs.append('mapred.fairscheduler.pool=%s' % pool)
-            elif scheduler_type == 'capacity':
+            if scheduler_type == 'capacity':
                 jcs.append('mapred.job.queue.name=%s' % pool)
+            elif scheduler_type == 'fair':
+                jcs.append('mapred.fairscheduler.pool=%s' % pool)
         return jcs
 
     def init_local(self):
@@ -941,26 +939,27 @@ class JobTask(BaseHadoopJobTask):
         self._links.append((src, dst))
 
     def _setup_links(self):
-        if hasattr(self, '_links'):
-            missing = []
-            for src, dst in self._links:
-                d = os.path.dirname(dst)
-                if d:
-                    try:
-                        os.makedirs(d)
-                    except OSError:
-                        pass
-                if not os.path.exists(src):
-                    missing.append(src)
-                    continue
-                if not os.path.exists(dst):
-                    # If the combiner runs, the file might already exist,
-                    # so no reason to create the link again
-                    os.link(src, dst)
-            if missing:
-                raise HadoopJobError(
-                    'Missing files for distributed cache: ' +
-                    ', '.join(missing))
+        if not hasattr(self, '_links'):
+            return
+        missing = []
+        for src, dst in self._links:
+            d = os.path.dirname(dst)
+            if d:
+                try:
+                    os.makedirs(d)
+                except OSError:
+                    pass
+            if not os.path.exists(src):
+                missing.append(src)
+                continue
+            if not os.path.exists(dst):
+                # If the combiner runs, the file might already exist,
+                # so no reason to create the link again
+                os.link(src, dst)
+        if missing:
+            raise HadoopJobError(
+                'Missing files for distributed cache: ' +
+                ', '.join(missing))
 
     def dump(self, directory=''):
         """
@@ -987,11 +986,9 @@ class JobTask(BaseHadoopJobTask):
         the arguments will be splitted in key and value.
         """
         for record in self.reader(input_stream):
-            for output in self.mapper(*record):
-                yield output
+            yield from self.mapper(*record)
         if self.final_mapper != NotImplemented:
-            for output in self.final_mapper():
-                yield output
+            yield from self.final_mapper()
         self._flush_batch_incr_counter()
 
     def _reduce_input(self, inputs, reducer, final=NotImplemented):
@@ -999,11 +996,9 @@ class JobTask(BaseHadoopJobTask):
         Iterate over input, collect values with the same key, and call the reducer for each unique key.
         """
         for key, values in groupby(inputs, key=lambda x: self.internal_serialize(x[0])):
-            for output in reducer(self.deserialize(key), (v[1] for v in values)):
-                yield output
+            yield from reducer(self.deserialize(key), (v[1] for v in values))
         if final != NotImplemented:
-            for output in final():
-                yield output
+            yield from final()
         self._flush_batch_incr_counter()
 
     def run_mapper(self, stdin=sys.stdin, stdout=sys.stdout):

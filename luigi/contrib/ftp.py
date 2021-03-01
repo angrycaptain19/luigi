@@ -56,10 +56,7 @@ class RemoteFileSystem(luigi.target.FileSystem):
         self.pysftp_conn_kwargs = pysftp_conn_kwargs or {}
 
         if port is None:
-            if self.sftp:
-                self.port = 22
-            else:
-                self.port = 21
+            self.port = 22 if self.sftp else 21
         else:
             self.port = port
 
@@ -82,10 +79,7 @@ class RemoteFileSystem(luigi.target.FileSystem):
                                       port=self.port, **self.pysftp_conn_kwargs)
 
     def _ftp_connect(self):
-        if self.tls:
-            self.conn = ftplib.FTP_TLS()
-        else:
-            self.conn = ftplib.FTP()
+        self.conn = ftplib.FTP_TLS() if self.tls else ftplib.FTP()
         self.conn.connect(self.host, self.port, timeout=self.timeout)
         self.conn.login(self.username, self.password)
         if self.tls:
@@ -323,11 +317,7 @@ class RemoteFileSystem(luigi.target.FileSystem):
         """
         self._connect()
 
-        if self.sftp:
-            contents = self._sftp_listdir(path)
-        else:
-            contents = self._ftp_listdir(path)
-
+        contents = self._sftp_listdir(path) if self.sftp else self._ftp_listdir(path)
         self._close()
 
         return contents

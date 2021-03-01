@@ -101,9 +101,7 @@ class HdfsTarget(FileSystemTarget):
 
     def glob_exists(self, expected_files):
         ls = list(self.fs.listdir(self.path))
-        if len(ls) == expected_files:
-            return True
-        return False
+        return len(ls) == expected_files
 
     def open(self, mode='r'):
         if mode not in ('r', 'w'):

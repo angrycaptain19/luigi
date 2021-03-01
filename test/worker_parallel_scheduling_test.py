@@ -31,12 +31,8 @@ from luigi.task_status import UNKNOWN
 
 
 def running_children():
-    children = set()
     process = psutil.Process(os.getpid())
-    for child in process.children():
-        if child.is_running():
-            children.add(child.pid)
-    return children
+    return {child.pid for child in process.children() if child.is_running()}
 
 
 @contextlib.contextmanager

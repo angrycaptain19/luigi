@@ -93,10 +93,7 @@ class HadoopJarJobTaskTest(unittest.TestCase):
             def check_space(arr, task_id):
                 for a in arr:
                     if a.startswith('hadoop jar'):
-                        found = False
-                        for x in shlex.split(a):
-                            if task_id in x:
-                                found = True
+                        found = any(task_id in x for x in shlex.split(a))
                         if not found:
                             raise AssertionError
 

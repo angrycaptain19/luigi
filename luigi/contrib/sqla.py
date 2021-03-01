@@ -330,8 +330,7 @@ class CopyToTable(luigi.Task):
         :type engine: object
         """
         def construct_sqla_columns(columns):
-            retval = [sqlalchemy.Column(*c[0], **c[1]) for c in columns]
-            return retval
+            return [sqlalchemy.Column(*c[0], **c[1]) for c in columns]
 
         needs_setup = (len(self.columns) == 0) or (False in [len(c) == 2 for c in self.columns]) if not self.reflect else False
         if needs_setup:
@@ -410,6 +409,9 @@ class CopyToTable(luigi.Task):
         :param table_bound: The object referring to the table
         :return:
         """
-        bound_cols = dict((c, sqlalchemy.bindparam("_" + c.key)) for c in table_bound.columns)
+        bound_cols = {
+            c: sqlalchemy.bindparam("_" + c.key) for c in table_bound.columns
+        }
+
         ins = table_bound.insert().values(bound_cols)
         conn.execute(ins, ins_rows)

@@ -95,8 +95,14 @@ def _partition_tasks(worker):
     """
     task_history = worker._add_task_history
     pending_tasks = {task for(task, status, ext) in task_history if status == 'PENDING'}
-    set_tasks = {}
-    set_tasks["completed"] = {task for (task, status, ext) in task_history if status == 'DONE' and task in pending_tasks}
+    set_tasks = {
+        "completed": {
+            task
+            for (task, status, ext) in task_history
+            if status == 'DONE' and task in pending_tasks
+        }
+    }
+
     set_tasks["already_done"] = {task for (task, status, ext) in task_history
                                  if status == 'DONE' and task not in pending_tasks and task not in set_tasks["completed"]}
     set_tasks["ever_failed"] = {task for (task, status, ext) in task_history if status == 'FAILED'}
@@ -242,10 +248,10 @@ def _get_str_ranging_multiple_parameters(first, last, tasks, unique_param):
 
 
 def _get_set_of_params(tasks):
-    params = {}
-    for param in tasks[0].get_params():
-        params[param] = {getattr(task, param[0]) for task in tasks}
-    return params
+    return {
+        param: {getattr(task, param[0]) for task in tasks}
+        for param in tasks[0].get_params()
+    }
 
 
 def _get_unique_param_keys(params):
@@ -395,9 +401,11 @@ def _summary_dict(worker):
 
 
 def _summary_format(set_tasks, worker):
-    group_tasks = {}
-    for status, task_dict in set_tasks.items():
-        group_tasks[status] = _group_tasks_by_name_and_status(task_dict)
+    group_tasks = {
+        status: _group_tasks_by_name_and_status(task_dict)
+        for status, task_dict in set_tasks.items()
+    }
+
     comments = _get_comments(group_tasks)
     num_all_tasks = sum([len(set_tasks["already_done"]),
                          len(set_tasks["completed"]), len(set_tasks["failed"]),
@@ -413,9 +421,11 @@ def _summary_format(set_tasks, worker):
         if status != 'still_pending':
             str_output += '{0}\n'.format(_get_str(group_tasks[status], status in _PENDING_SUB_STATUSES))
     ext_workers = _get_external_workers(worker)
-    group_tasks_ext_workers = {}
-    for ext_worker, task_dict in ext_workers.items():
-        group_tasks_ext_workers[ext_worker] = _group_tasks_by_name_and_status(task_dict)
+    group_tasks_ext_workers = {
+        ext_worker: _group_tasks_by_name_and_status(task_dict)
+        for ext_worker, task_dict in ext_workers.items()
+    }
+
     if len(ext_workers) > 0:
         str_output += "\nThe other workers were:\n"
         count = 0
@@ -454,10 +464,9 @@ def _tasks_status(set_tasks):
     if set_tasks["ever_failed"]:
         if not set_tasks["failed"]:
             return LuigiStatusCode.SUCCESS_WITH_RETRY
-        else:
-            if set_tasks["scheduling_error"]:
-                return LuigiStatusCode.FAILED_AND_SCHEDULING_FAILED
-            return LuigiStatusCode.FAILED
+        if set_tasks["scheduling_error"]:
+            return LuigiStatusCode.FAILED_AND_SCHEDULING_FAILED
+        return LuigiStatusCode.FAILED
     elif set_tasks["scheduling_error"]:
         return LuigiStatusCode.SCHEDULING_FAILED
     elif set_tasks["not_run"]:

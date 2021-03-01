@@ -84,8 +84,7 @@ def track_job(job_id):
     cmd = "bjobs -noheader -o stat {}".format(job_id)
     track_job_proc = subprocess.Popen(
         cmd, stdout=subprocess.PIPE, shell=True)
-    status = track_job_proc.communicate()[0].strip('\n')
-    return status
+    return track_job_proc.communicate()[0].strip('\n')
 
 
 def kill_job(job_id):
@@ -247,8 +246,7 @@ class LSFJobTask(luigi.Task):
         args += [self.tmp_dir]
 
         # That should do it. Let the world know what we're doing.
-        LOGGER.info("### LSF SUBMISSION ARGS: %s",
-                    " ".join([str(a) for a in args]))
+        LOGGER.info("### LSF SUBMISSION ARGS: %s", " ".join(str(a) for a in args))
 
         # Submit the job
         run_job_proc = subprocess.Popen(
@@ -299,7 +297,7 @@ class LSFJobTask(luigi.Task):
             elif lsf_status == "PEND":
                 self.job_status = PENDING
                 LOGGER.info("Job is pending...")
-            elif lsf_status == "DONE" or lsf_status == "EXIT":
+            elif lsf_status in ["DONE", "EXIT"]:
                 # Then the job could either be failed or done.
                 errors = self.fetch_task_failures()
                 if not errors:

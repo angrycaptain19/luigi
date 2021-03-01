@@ -69,9 +69,7 @@ def get_spool_handler(filename):
 
 def _server_already_running(pidfile):
     existing_pid = check_pid(pidfile)
-    if pidfile and existing_pid:
-        return True
-    return False
+    return bool(pidfile and existing_pid)
 
 
 def daemonize(cmd, pidfile=None, logdir=None, api_port=8082, address=None, unix_socket=None):

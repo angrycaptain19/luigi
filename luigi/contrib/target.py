@@ -61,8 +61,7 @@ class CascadingClient:
         for i in range(len(self.clients)):
             client = self.clients[i]
             try:
-                result = getattr(client, method_name)(*args, **kwargs)
-                return result
+                return getattr(client, method_name)(*args, **kwargs)
             except luigi.target.FileSystemException:
                 # For exceptions that are semantical, we must throw along
                 raise

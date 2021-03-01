@@ -32,10 +32,7 @@ class LinearSum(luigi.Task):
             return self.clone(hi=self.hi - 1)
 
     def run(self):
-        if self.hi > self.lo:
-            self.s = self.requires().s + self.f(self.hi - 1)
-        else:
-            self.s = 0
+        self.s = self.requires().s + self.f(self.hi - 1) if self.hi > self.lo else 0
         self.complete = lambda: True  # workaround since we don't write any output
 
     def complete(self):

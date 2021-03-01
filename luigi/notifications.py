@@ -407,8 +407,14 @@ def format_task_error(headline, task, command, formatted_exception=None):
 
         str_params = task.to_str_params()
         params = '\n'.join('<tr><th>{}</th><td>{}</td></tr>'.format(*items) for items in str_params.items())
-        body = msg_template.format(headline=headline, name=task.task_family, param_rows=params,
-                                   command=command, traceback=formatted_exception)
+        return msg_template.format(
+            headline=headline,
+            name=task.task_family,
+            param_rows=params,
+            command=command,
+            traceback=formatted_exception,
+        )
+
     else:
         msg_template = textwrap.dedent('''\
         {headline}
@@ -427,7 +433,10 @@ def format_task_error(headline, task, command, formatted_exception=None):
         str_params = task.to_str_params()
         max_width = max([0] + [len(x) for x in str_params.keys()])
         params = '\n'.join('  {:{width}}: {}'.format(*items, width=max_width) for items in str_params.items())
-        body = msg_template.format(headline=headline, name=task.task_family, params=params,
-                                   command=command, traceback=formatted_exception)
-
-    return body
+        return msg_template.format(
+            headline=headline,
+            name=task.task_family,
+            params=params,
+            command=command,
+            traceback=formatted_exception,
+        )

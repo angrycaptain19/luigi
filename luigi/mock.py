@@ -61,10 +61,7 @@ class MockFileSystem(target.FileSystem):
         Removes the given mockfile. skip_trash doesn't have any meaning.
         """
         if recursive:
-            to_delete = []
-            for s in self.get_all_data().keys():
-                if s.startswith(path):
-                    to_delete.append(s)
+            to_delete = [s for s in self.get_all_data().keys() if s.startswith(path)]
             for s in to_delete:
                 self.get_all_data().pop(s)
         else:
@@ -142,10 +139,7 @@ class MockTarget(target.FileSystemTarget):
                         sys.stderr.write(data.decode('utf8'))
                     else:
                         sys.stderr.write(data)
-                    if (data[-1]) == '\n':
-                        self._write_line = True
-                    else:
-                        self._write_line = False
+                    self._write_line = (data[-1]) == '\n'
                 super(Buffer, self).write(data)
 
             def close(self):

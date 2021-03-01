@@ -108,7 +108,7 @@ def rpc_method(**request_args):
             actual_args = defaults.copy()
             actual_args.update(dict(zip(all_args, args)))
             actual_args.update(kwargs)
-            if not all(arg in actual_args for arg in required_args):
+            if any(arg not in actual_args for arg in required_args):
                 raise TypeError('{} takes {} arguments ({} given)'.format(
                     fn_name, len(all_args), len(actual_args)))
             return self._request('/api/{}'.format(fn_name), actual_args, **request_args)
@@ -212,8 +212,7 @@ class OrderedSet(MutableSet):
     def peek(self, last=True):
         if not self:
             raise KeyError('set is empty')
-        key = self.end[1][0] if last else self.end[2][0]
-        return key
+        return self.end[1][0] if last else self.end[2][0]
 
     def pop(self, last=True):
         key = self.peek(last)
@@ -238,10 +237,7 @@ class Task:
         self.id = task_id
         self.stakeholders = set()  # workers ids that are somehow related to this task (i.e. don't prune while any of these workers are still active)
         self.workers = OrderedSet()  # workers ids that can perform task - task is 'BROKEN' if none of these workers are active
-        if deps is None:
-            self.deps = set()
-        else:
-            self.deps = set(deps)
+        self.deps = set() if deps is None else set(deps)
         self.status = status  # PENDING, RUNNING, FAILED or DONE
         self.time = time.time()  # Timestamp when task was first added
         self.updated = self.time
@@ -313,9 +309,12 @@ class Task:
         return len(self.failures)
 
     def has_excessive_failures(self):
-        if self.first_failure_time is not None:
-            if time.time() >= self.first_failure_time + self.retry_policy.disable_hard_timeout:
-                return True
+        if (
+            self.first_failure_time is not None
+            and time.time()
+            >= self.first_failure_time + self.retry_policy.disable_hard_timeout
+        ):
+            return True
 
         logger.debug('%s task num failures is %s and limit is %s', self.id, self.num_failures(), self.retry_policy.retry_count)
         if self.num_failures() >= self.retry_policy.retry_count:
@@ -500,12 +499,12 @@ class SimpleTaskState:
         return len(self._status_tasks[PENDING]) + len(self._status_tasks[RUNNING])
 
     def get_task(self, task_id, default=None, setdefault=None):
-        if setdefault:
-            task = self._tasks.setdefault(task_id, setdefault)
-            self._status_tasks[task.status][task.id] = task
-            return task
-        else:
+        if not setdefault:
             return self._tasks.get(task_id, default)
+
+        task = self._tasks.setdefault(task_id, setdefault)
+        self._status_tasks[task.status][task.id] = task
+        return task
 
     def has_task(self, task_id):
         return task_id in self._tasks
@@ -597,9 +596,12 @@ class SimpleTaskState:
             task.remove = time.time() + config.remove_delay
 
         # Re-enable task after the disable time expires
-        if task.status == DISABLED and task.scheduler_disable_time is not None:
-            if time.time() - task.scheduler_disable_time > config.disable_persist:
-                self.re_enable(task, config)
+        if (
+            task.status == DISABLED
+            and task.scheduler_disable_time is not None
+            and time.time() - task.scheduler_disable_time > config.disable_persist
+        ):
+            self.re_enable(task, config)
 
         # Reset FAILED tasks to PENDING if max timeout is reached, and retry delay is >= 0
         if task.status == FAILED and config.retry_delay >= 0 and task.retry < time.time():
@@ -1032,10 +1034,11 @@ class Scheduler:
             return True
 
         available_resources = self._resources or {}
-        for resource, amount in needed_resources.items():
-            if amount + used_resources[resource] > available_resources.get(resource, 1):
-                return False
-        return True
+        return all(
+            amount + used_resources[resource]
+            <= available_resources.get(resource, 1)
+            for resource, amount in needed_resources.items()
+        )
 
     def _used_resources(self):
         used_resources = collections.defaultdict(int)
@@ -1625,7 +1628,7 @@ class Scheduler:
 
     def _update_task_history(self, task, status, host=None):
         try:
-            if status == DONE or status == FAILED:
+            if status in [DONE, FAILED]:
                 successful = (status == DONE)
                 self._task_history.task_finished(task, successful)
             elif status == PENDING:

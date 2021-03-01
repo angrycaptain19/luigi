@@ -60,7 +60,7 @@ class Bar(luigi.Task):
 
         if max_total_nodes > current_nodes:
             valor = int(random.uniform(1, 30))
-            for i in range(valor // max_depth):
+            for _ in range(valor // max_depth):
                 current_nodes += 1
                 yield Bar(current_nodes)
 

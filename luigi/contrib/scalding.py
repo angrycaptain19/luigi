@@ -120,8 +120,7 @@ class ScaldingJobRunner(luigi.contrib.hadoop.JobRunner):
         return os.path.join(self.tmp_dir.path, job_name + '.jar')
 
     def get_build_dir(self, source):
-        build_dir = os.path.join(self.tmp_dir.path, 'build')
-        return build_dir
+        return os.path.join(self.tmp_dir.path, 'build')
 
     def get_job_class(self, source):
         # find name of the job class

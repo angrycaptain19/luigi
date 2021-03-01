@@ -52,9 +52,7 @@ class ExecutionSummaryTest(LuigiTestCase):
                     raise ValueError()
 
             def complete(self):
-                if self.num == 1:
-                    return True
-                return False
+                return self.num == 1
 
         class Foo(luigi.Task):
             def requires(self):
@@ -155,7 +153,6 @@ class ExecutionSummaryTest(LuigiTestCase):
 
             def complete(self):
                 raise Exception
-                return True
 
         class Foo(luigi.Task):
             def requires(self):
@@ -254,7 +251,6 @@ class ExecutionSummaryTest(LuigiTestCase):
         class Foo(luigi.Task):
             def requires(self):
                 raise Exception
-                yield Bar()
 
         self.run_task(Foo())
         d = self.summary_dict()
@@ -351,9 +347,7 @@ class ExecutionSummaryTest(LuigiTestCase):
             num = luigi.IntParameter()
 
             def complete(self):
-                if self.num == 1:
-                    return True
-                return False
+                return self.num == 1
 
         class Bar(luigi.Task):
             num = luigi.IntParameter()
@@ -847,9 +841,7 @@ class ExecutionSummaryTest(LuigiTestCase):
             num = luigi.IntParameter()
 
             def complete(self):
-                if self.num == 5:
-                    return True
-                return False
+                return self.num == 5
 
         class Foo(luigi.Task):
 
@@ -1076,8 +1068,7 @@ class ExecutionSummaryTest(LuigiTestCase):
 
         self.run_task(Bar(args=args))
         d = self.summary_dict()
-        exp_set = set()
-        exp_set.add(Bar(args=args))
+        exp_set = {Bar(args=args)}
         self.assertEqual(exp_set, d['completed'])
         s = self.summary()
         self.assertIn('"num": 3', s)

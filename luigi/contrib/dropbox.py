@@ -184,8 +184,7 @@ class DropboxClient(FileSystem):
             return True
         try:
             md = self.conn.files_get_metadata(path)
-            is_dir = isinstance(md, dropbox.files.FolderMetadata)
-            return is_dir
+            return isinstance(md, dropbox.files.FolderMetadata)
         except dropbox.exceptions.ApiError:
             return False
 

@@ -352,8 +352,7 @@ class CopyToIndex(luigi.Task):
         Beside the user defined fields, the document may contain an `_index`, `_type` and `_id`.
         """
         with self.input().open('r') as fobj:
-            for line in fobj:
-                yield line
+            yield from fobj
 
 # everything below will rarely have to be overridden
 
@@ -367,9 +366,7 @@ class CopyToIndex(luigi.Task):
         needs_parsing = False
         if isinstance(first, str):
             needs_parsing = True
-        elif isinstance(first, dict):
-            pass
-        else:
+        elif not isinstance(first, dict):
             raise RuntimeError('Document must be either JSON strings or dict.')
         for doc in itertools.chain([first], iterdocs):
             if needs_parsing:

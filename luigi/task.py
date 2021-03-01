@@ -421,7 +421,7 @@ class Task(metaclass=Register):
 
         def list_to_tuple(x):
             """ Make tuples out of lists and sets to allow hashing """
-            if isinstance(x, list) or isinstance(x, set):
+            if isinstance(x, (list, set)):
                 return tuple(x)
             else:
                 return x
@@ -485,24 +485,27 @@ class Task(metaclass=Register):
         """
         Convert all parameters to a str->str hash.
         """
-        params_str = {}
         params = dict(self.get_params())
-        for param_name, param_value in self.param_kwargs.items():
-            if (((not only_significant) or params[param_name].significant)
-                    and ((not only_public) or params[param_name].visibility == ParameterVisibility.PUBLIC)
-                    and params[param_name].visibility != ParameterVisibility.PRIVATE):
-                params_str[param_name] = params[param_name].serialize(param_value)
-
-        return params_str
+        return {
+            param_name: params[param_name].serialize(param_value)
+            for param_name, param_value in self.param_kwargs.items()
+            if (
+                ((not only_significant) or params[param_name].significant)
+                and (
+                    (not only_public)
+                    or params[param_name].visibility == ParameterVisibility.PUBLIC
+                )
+                and params[param_name].visibility != ParameterVisibility.PRIVATE
+            )
+        }
 
     def _get_param_visibilities(self):
-        param_visibilities = {}
         params = dict(self.get_params())
-        for param_name, param_value in self.param_kwargs.items():
-            if params[param_name].visibility != ParameterVisibility.PRIVATE:
-                param_visibilities[param_name] = params[param_name].visibility.serialize()
-
-        return param_visibilities
+        return {
+            param_name: params[param_name].visibility.serialize()
+            for param_name, param_value in self.param_kwargs.items()
+            if params[param_name].visibility != ParameterVisibility.PRIVATE
+        }
 
     def clone(self, cls=None, **kwargs):
         """
@@ -539,16 +542,15 @@ class Task(metaclass=Register):
         params = self.get_params()
         param_values = self.get_param_values(params, [], self.param_kwargs)
 
-        # Build up task id
-        repr_parts = []
         param_objs = dict(params)
-        for param_name, param_value in param_values:
-            if param_objs[param_name].significant:
-                repr_parts.append('%s=%s' % (param_name, param_objs[param_name].serialize(param_value)))
+        # Build up task id
+        repr_parts = [
+            '%s=%s' % (param_name, param_objs[param_name].serialize(param_value))
+            for param_name, param_value in param_values
+            if param_objs[param_name].significant
+        ]
 
-        task_str = '{}({})'.format(self.get_task_family(), ', '.join(repr_parts))
-
-        return task_str
+        return '{}({})'.format(self.get_task_family(), ', '.join(repr_parts))
 
     def __eq__(self, other):
         return self.__class__ == other.__class__ and self.task_id == other.task_id
@@ -728,18 +730,18 @@ class MixinNaiveBulkComplete:
     """
     @classmethod
     def bulk_complete(cls, parameter_tuples):
-        generated_tuples = []
-        for parameter_tuple in parameter_tuples:
-            if isinstance(parameter_tuple, (list, tuple)):
-                if cls(*parameter_tuple).complete():
-                    generated_tuples.append(parameter_tuple)
-            elif isinstance(parameter_tuple, dict):
-                if cls(**parameter_tuple).complete():
-                    generated_tuples.append(parameter_tuple)
-            else:
-                if cls(parameter_tuple).complete():
-                    generated_tuples.append(parameter_tuple)
-        return generated_tuples
+        return [
+            parameter_tuple
+            for parameter_tuple in parameter_tuples
+            if isinstance(parameter_tuple, (list, tuple))
+            and cls(*parameter_tuple).complete()
+            or not isinstance(parameter_tuple, (list, tuple))
+            and isinstance(parameter_tuple, dict)
+            and cls(**parameter_tuple).complete()
+            or not isinstance(parameter_tuple, (list, tuple))
+            and not isinstance(parameter_tuple, dict)
+            and cls(parameter_tuple).complete()
+        ]
 
 
 class ExternalTask(Task):

@@ -393,7 +393,7 @@ class S3CopyToTable(rdbms.CopyToTable, _CredentialsMixin):
         logger.info("Inserting file: %s", f)
         colnames = ''
         if self.columns and len(self.columns) > 0:
-            colnames = ",".join([x[0] for x in self.columns])
+            colnames = ",".join(x[0] for x in self.columns)
             colnames = '({})'.format(colnames)
 
         cursor.execute("""
@@ -687,18 +687,17 @@ class KillOpenRedshiftSessions(luigi.Task):
             cursor.close()
             connection.commit()
         except psycopg2.DatabaseError as e:
-            if e.message and 'EOF' in e.message:
-                # sometimes this operation kills the current session.
-                # rebuild the connection. Need to pause for 30-60 seconds
-                # before Redshift will allow us back in.
-                connection.close()
-                logger.info('Pausing %s seconds for Redshift to reset connection', self.connection_reset_wait_seconds)
-                time.sleep(self.connection_reset_wait_seconds)
-                logger.info('Reconnecting to Redshift')
-                connection = self.output().connect()
-            else:
+            if not e.message or 'EOF' not in e.message:
                 raise
 
+            # sometimes this operation kills the current session.
+            # rebuild the connection. Need to pause for 30-60 seconds
+            # before Redshift will allow us back in.
+            connection.close()
+            logger.info('Pausing %s seconds for Redshift to reset connection', self.connection_reset_wait_seconds)
+            time.sleep(self.connection_reset_wait_seconds)
+            logger.info('Reconnecting to Redshift')
+            connection = self.output().connect()
         try:
             self.output().touch(connection)
             connection.commit()

@@ -59,11 +59,9 @@ def dfs_paths(start_task, goal_task_family, path=None):
     if path is None:
         path = [start_task]
     if start_task.task_family == goal_task_family or goal_task_family is None:
-        for item in path:
-            yield item
+        yield from path
     for next in get_task_requires(start_task) - set(path):
-        for t in dfs_paths(next, goal_task_family, path + [next]):
-            yield t
+        yield from dfs_paths(next, goal_task_family, path + [next])
 
 
 class upstream(luigi.task.Config):
@@ -99,17 +97,18 @@ def get_task_output_description(task_output):
     output_description = "n/a"
 
     if isinstance(task_output, RemoteTarget):
-        output_description = "[SSH] {0}:{1}".format(task_output._fs.remote_context.host, task_output.path)
-    elif isinstance(task_output, S3Target):
-        output_description = "[S3] {0}".format(task_output.path)
-    elif isinstance(task_output, FileSystemTarget):
-        output_description = "[FileSystem] {0}".format(task_output.path)
-    elif isinstance(task_output, PostgresTarget):
-        output_description = "[DB] {0}:{1}".format(task_output.host, task_output.table)
-    else:
-        output_description = "to be determined"
+        return "[SSH] {0}:{1}".format(
+            task_output._fs.remote_context.host, task_output.path
+        )
 
-    return output_description
+    elif isinstance(task_output, S3Target):
+        return "[S3] {0}".format(task_output.path)
+    elif isinstance(task_output, FileSystemTarget):
+        return "[FileSystem] {0}".format(task_output.path)
+    elif isinstance(task_output, PostgresTarget):
+        return "[DB] {0}:{1}".format(task_output.host, task_output.table)
+    else:
+        return "to be determined"
 
 
 def main():

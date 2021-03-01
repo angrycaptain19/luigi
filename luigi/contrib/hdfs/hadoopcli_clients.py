@@ -78,13 +78,12 @@ class HdfsClient(hdfs_abstract_client.HdfsFileSystem):
         stdout, stderr = p.communicate()
         if p.returncode == 0:
             return True
-        else:
-            not_found_pattern = "^.*No such file or directory$"
-            not_found_re = re.compile(not_found_pattern)
-            for line in stderr.split('\n'):
-                if not_found_re.match(line):
-                    return False
-            raise hdfs_error.HDFSCliError(cmd, p.returncode, stdout, stderr)
+        not_found_pattern = "^.*No such file or directory$"
+        not_found_re = re.compile(not_found_pattern)
+        for line in stderr.split('\n'):
+            if not_found_re.match(line):
+                return False
+        raise hdfs_error.HDFSCliError(cmd, p.returncode, stdout, stderr)
 
     def move(self, path, dest):
         parent_dir = os.path.dirname(dest)
@@ -136,8 +135,11 @@ class HdfsClient(hdfs_abstract_client.HdfsFileSystem):
                 lines.pop(lines.index(line))
             else:
                 (dir_count, file_count, content_size, ppath) = stdout.split()
-        results = {'content_size': content_size, 'dir_count': dir_count, 'file_count': file_count}
-        return results
+        return {
+            'content_size': content_size,
+            'dir_count': dir_count,
+            'file_count': file_count,
+        }
 
     def copy(self, path, destination):
         self.call_check(load_hadoop_cmd() + ['fs', '-cp', path, destination])
@@ -193,11 +195,11 @@ class HdfsClient(hdfs_abstract_client.HdfsFileSystem):
             data = line.split(' ')
 
             file = data[-1]
-            size = int(data[-4])
             line_type = line[0]
             extra_data = ()
 
             if include_size:
+                size = int(data[-4])
                 extra_data += (size,)
             if include_type:
                 extra_data += (line_type,)
@@ -207,7 +209,7 @@ class HdfsClient(hdfs_abstract_client.HdfsFileSystem):
                                                                '%Y-%m-%dT%H:%M')
                 extra_data += (modification_time,)
 
-            if len(extra_data) > 0:
+            if extra_data:
                 yield (file,) + extra_data
             else:
                 yield file

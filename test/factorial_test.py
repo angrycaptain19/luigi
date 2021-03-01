@@ -33,10 +33,7 @@ class Factorial(luigi.Task):
             return Factorial(self.n - 1)
 
     def run(self):
-        if self.n > 1:
-            self.value = self.n * self.requires().value
-        else:
-            self.value = 1
+        self.value = self.n * self.requires().value if self.n > 1 else 1
         self.complete = lambda: True
 
     def complete(self):
