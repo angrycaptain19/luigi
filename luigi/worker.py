@@ -138,10 +138,7 @@ class TaskProcess(multiprocessing.Process):
         next_send = None
         while True:
             try:
-                if next_send is None:
-                    requires = next(task_gen)
-                else:
-                    requires = task_gen.send(next_send)
+                requires = next(task_gen) if next_send is None else task_gen.send(next_send)
             except StopIteration:
                 return None
 
@@ -149,9 +146,8 @@ class TaskProcess(multiprocessing.Process):
             if all(t.complete() for t in new_req):
                 next_send = getpaths(requires)
             else:
-                new_deps = [(t.task_module, t.task_family, t.to_str_params())
+                return [(t.task_module, t.task_family, t.to_str_params())
                             for t in new_req]
-                return new_deps
 
     def run(self):
         logger.info('[pid %s] Worker %s running   %s', os.getpid(), self.worker_id, self.task)
@@ -635,7 +631,7 @@ class Worker:
         return args
 
     def _generate_worker_id(self, worker_info):
-        worker_info_str = ', '.join(['{}={}'.format(k, v) for k, v in worker_info])
+        worker_info_str = ', '.join('{}={}'.format(k, v) for k, v in worker_info)
         return 'Worker({})'.format(worker_info_str)
 
     def _validate_task(self, task):
@@ -1194,15 +1190,12 @@ class Worker:
                     self._log_remote_tasks(get_work_response)
                 if len(self._running_tasks) == 0:
                     self._idle_since = self._idle_since or datetime.datetime.now()
-                    if self._keep_alive(get_work_response):
-                        next(sleeper)
-                        continue
-                    else:
+                    if not self._keep_alive(get_work_response):
                         break
+                    next(sleeper)
                 else:
                     self._handle_next_task()
-                    continue
-
+                continue
             # task_id is not None:
             logger.debug("Pending tasks: %s", get_work_response.n_pending_tasks)
             self._run_task(get_work_response.task_id)

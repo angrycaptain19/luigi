@@ -120,12 +120,11 @@ class MSSqlTarget(luigi.Target):
         """
         Create a SQL Server connection and return a connection object
         """
-        connection = _mssql.connect(user=self.user,
+        return _mssql.connect(user=self.user,
                                     password=self.password,
                                     server=self.host,
                                     port=self.port,
                                     database=self.database)
-        return connection
 
     def create_marker_table(self):
         """
@@ -147,8 +146,6 @@ class MSSqlTarget(luigi.Target):
             )
         except _mssql.MSSQLDatabaseException as e:
             # Table already exists code
-            if e.number == 2714:
-                pass
-            else:
+            if e.number != 2714:
                 raise
         connection.close()

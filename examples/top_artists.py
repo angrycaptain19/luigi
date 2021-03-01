@@ -179,8 +179,7 @@ class AggregateArtistsSpark(luigi.contrib.spark.SparkSubmitTask):
     def app_options(self):
         # :func:`~luigi.task.Task.input` returns the targets produced by the tasks in
         # `~luigi.task.Task.requires`.
-        return [','.join([p.path for p in self.input()]),
-                self.output().path]
+        return [','.join(p.path for p in self.input()), self.output().path]
 
 
 class Top10Artists(luigi.Task):

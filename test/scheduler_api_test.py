@@ -866,7 +866,7 @@ class SchedulerApiTest(unittest.TestCase):
         self.sch.get_work(worker='MAYBE_ASSITANT', assistant=True)  # tell the scheduler this is an assistant
 
         # create a scheduler disabled task and a worker disabled task
-        for i in range(10):
+        for _ in range(10):
             self.sch.add_task(worker=WORKER, task_id='D', status=FAILED)
         self.sch.add_task(worker=WORKER, task_id='E', status=DISABLED)
 
@@ -1921,7 +1921,7 @@ class SchedulerApiTest(unittest.TestCase):
         for i in range(NUM_PENDING, NUM_DONE):
             self.sch.add_task(worker=WORKER, task_id=str(i), status=DONE)
 
-        for i in range(NUM_PENDING):
+        for _ in range(NUM_PENDING):
             res = int(self.sch.get_work(worker=WORKER)['task_id'])
             self.assertTrue(0 <= res < NUM_PENDING)
             self.sch.add_task(worker=WORKER, task_id=str(res), status=DONE)

@@ -154,8 +154,7 @@ class InputPipeProcessWrapper:
             return getattr(self._input_pipe, name)
 
     def __iter__(self):
-        for line in self._process.stdout:
-            yield line
+        yield from self._process.stdout
         self._finish()
 
     def readable(self):
@@ -267,8 +266,7 @@ class BaseWrapper:
 
     def __iter__(self):
         try:
-            for line in self._stream:
-                yield line
+            yield from self._stream
         finally:
             self.close()
 
@@ -276,11 +274,7 @@ class BaseWrapper:
 class NewlineWrapper(BaseWrapper):
 
     def __init__(self, stream, newline=None):
-        if newline is None:
-            self.newline = newline
-        else:
-            self.newline = newline.encode('ascii')
-
+        self.newline = newline if newline is None else newline.encode('ascii')
         if self.newline not in (b'', b'\r\n', b'\n', b'\r', None):
             raise ValueError("newline need to be one of {b'', b'\r\n', b'\n', b'\r', None}")
         super(NewlineWrapper, self).__init__(stream)

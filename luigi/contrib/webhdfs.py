@@ -67,8 +67,7 @@ class ReadableWebHdfsFile:
 
     def read(self):
         self.generator = self.client.read(self.path)
-        res = list(self.generator)[0]
-        return res
+        return list(self.generator)[0]
 
     def readlines(self, char='\n'):
         self.generator = self.client.read(self.path, buffer_char=char)

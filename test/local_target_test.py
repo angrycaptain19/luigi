@@ -171,9 +171,9 @@ class LocalTargetTest(unittest.TestCase, FileSystemTargetTestMixin):
     def test_format_chain(self):
         UTF8WIN = luigi.format.TextFormat(encoding='utf8', newline='\r\n')
         t = LocalTarget(self.path, UTF8WIN >> luigi.format.Gzip)
-        a = u'我é\nçф'
-
         with t.open('w') as f:
+            a = u'我é\nçф'
+
             f.write(a)
 
         f = gzip.open(self.path, 'rb')

@@ -108,8 +108,7 @@ class DateInterval:
         return date in self.dates()
 
     def __iter__(self):
-        for d in self.dates():
-            yield d
+        yield from self.dates()
 
     def __hash__(self):
         return hash(repr(self))
@@ -257,7 +256,7 @@ class Custom(DateInterval):
     most likely cause problems with paths etc.
     '''
     def to_string(self):
-        return '-'.join([d.strftime('%Y-%m-%d') for d in (self.date_a, self.date_b)])
+        return '-'.join(d.strftime('%Y-%m-%d') for d in (self.date_a, self.date_b))
 
     @classmethod
     def parse(cls, s):

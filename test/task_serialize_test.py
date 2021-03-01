@@ -87,9 +87,10 @@ def _task_to_dict(task):
 
 def _task_from_dict(task_cls, param_dict):
     # Regenerate the task from the dictionary
-    task_params = {}
-    for key, param in task_cls.get_params():
-        task_params[key] = param.parse(param_dict[key])
+    task_params = {
+        key: param.parse(param_dict[key])
+        for key, param in task_cls.get_params()
+    }
 
     return task_cls(**task_params)
 

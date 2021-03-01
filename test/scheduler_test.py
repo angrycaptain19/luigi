@@ -214,21 +214,21 @@ class SchedulerIoTest(unittest.TestCase):
         self.assertEqual(luigi.scheduler.RetryPolicy(11, 111, 1111), task_9.retry_policy)
 
         # Task 7 which is disable-failures 44 and its has_excessive_failures method returns False under 44
-        for i in range(43):
+        for _ in range(43):
             task_7.add_failure()
         self.assertFalse(task_7.has_excessive_failures())
         task_7.add_failure()
         self.assertTrue(task_7.has_excessive_failures())
 
         # Task 8 which is disable-failures 99 and its has_excessive_failures method returns False under 44
-        for i in range(98):
+        for _ in range(98):
             task_8.add_failure()
         self.assertFalse(task_8.has_excessive_failures())
         task_8.add_failure()
         self.assertTrue(task_8.has_excessive_failures())
 
         # Task 9 which is disable-failures 1 and its has_excessive_failures method returns False under 44
-        for i in range(10):
+        for _ in range(10):
             task_9.add_failure()
         self.assertFalse(task_9.has_excessive_failures())
         task_9.add_failure()

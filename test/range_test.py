@@ -166,8 +166,7 @@ class CommonWrapperTaskMinutes(luigi.WrapperTask):
 
 def mock_listdir(contents):
     def contents_listdir(_, glob):
-        for path in fnmatch.filter(contents, glob + '*'):
-            yield path
+        yield from fnmatch.filter(contents, glob + '*')
 
     return contents_listdir
 

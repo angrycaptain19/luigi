@@ -39,7 +39,9 @@ class Configuration(luigi.Task):
         rnd.seed(self.seed)
 
         result = ','.join(
-            [str(x) for x in rnd.sample(list(range(300)), rnd.randint(7, 25))])
+            str(x) for x in rnd.sample(list(range(300)), rnd.randint(7, 25))
+        )
+
         with self.output().open('w') as f:
             f.write(result)
 

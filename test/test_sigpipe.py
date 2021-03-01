@@ -58,10 +58,8 @@ class TestSigpipe(unittest.TestCase):
 
     def test_full_read(self):
         p1 = InputPipeProcessWrapper(["bash", "/tmp/luigi_test_sigpipe.sh"])
-        counter = 1
-        for line in p1:
+        for counter, line in enumerate(p1, start=1):
             self.assertEqual(line.decode('utf8'), "Welcome %i times\n" % counter)
-            counter += 1
         p1.close()
         self.assertFalse(os.path.exists("/tmp/luigi_sigpipe.marker"))
 
@@ -86,10 +84,8 @@ class TestSubprocessException(unittest.TestCase):
     def test_full_read(self):
         def run():
             p1 = InputPipeProcessWrapper(["bash", "/tmp/luigi_test_sigpipe.sh"])
-            counter = 1
-            for line in p1:
+            for counter, line in enumerate(p1, start=1):
                 self.assertEqual(line.decode('utf8'), "Welcome %i times\n" % counter)
-                counter += 1
             p1.close()
 
         self.assertRaises(RuntimeError, run)

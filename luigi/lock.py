@@ -104,8 +104,6 @@ def acquire_for(pid_dir, num_available=1, kill_signal=None):
     except OSError as exc:
         if exc.errno != errno.EEXIST:
             raise
-        pass
-
     # Let variable "pids" be all pids who exist in the .pid-file who are still
     # about running the same command.
     pids = {pid for pid in _read_pids_file(pid_file) if getpcmd(pid) == my_cmd}

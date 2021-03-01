@@ -202,7 +202,7 @@ class S3Client(FileSystem):
         if self._exists(bucket, '{}{}'.format(key, S3_DIRECTORY_MARKER_SUFFIX_0)):
             delete_key_list.append({'Key': '{}{}'.format(key, S3_DIRECTORY_MARKER_SUFFIX_0)})
 
-        if len(delete_key_list) > 0:
+        if delete_key_list:
             n = 1000
             for i in range(0, len(delete_key_list), n):
                 self.s3.meta.client.delete_objects(Bucket=bucket, Delete={'Objects': delete_key_list[i: i + n]})
@@ -332,7 +332,7 @@ class S3Client(FileSystem):
         for item in self.list(source_path, start_time=start_time, end_time=end_time, return_key=True):
             path = item.key[key_path_len:]
             # prevents copy attempt of empty key in folder
-            if path != '' and path != '/':
+            if path not in ['', '/']:
                 total_keys += 1
                 total_size_bytes += item.size
                 copy_source = {
@@ -373,8 +373,7 @@ class S3Client(FileSystem):
         """
         (bucket, key) = self._path_to_bucket_and_key(s3_path)
         obj = self.s3.Object(bucket, key)
-        contents = obj.get()['Body'].read()
-        return contents
+        return obj.get()['Body'].read()
 
     def get_as_string(self, s3_path, encoding='utf-8'):
         """
@@ -405,7 +404,7 @@ class S3Client(FileSystem):
                 self.s3.meta.client.get_object(
                     Bucket=bucket, Key=key + suffix)
             except botocore.exceptions.ClientError as e:
-                if not e.response['Error']['Code'] in ['NoSuchKey', '404']:
+                if e.response['Error']['Code'] not in ['NoSuchKey', '404']:
                     raise
             else:
                 return True
@@ -414,10 +413,7 @@ class S3Client(FileSystem):
         key_path = self._add_path_delimiter(key)
         s3_bucket_list_result = list(itertools.islice(
             s3_bucket.objects.filter(Prefix=key_path), 1))
-        if s3_bucket_list_result:
-            return True
-
-        return False
+        return bool(s3_bucket_list_result)
 
     is_dir = isdir  # compatibility with old version.
 
@@ -493,9 +489,11 @@ class S3Client(FileSystem):
                 pass
         if key:
             return config.get(key)
-        section_only = {k: v for k, v in config.items() if k not in defaults or v != defaults[k]}
-
-        return section_only
+        return {
+            k: v
+            for k, v in config.items()
+            if k not in defaults or v != defaults[k]
+        }
 
     @staticmethod
     def _path_to_bucket_and_key(path):
@@ -566,8 +564,7 @@ class ReadableS3File:
         self.finished = False
 
     def read(self, size=None):
-        f = self.s3_key.read(size)
-        return f
+        return self.s3_key.read(size)
 
     def close(self):
         self.s3_key.close()
@@ -653,16 +650,16 @@ class S3Target(FileSystemTarget):
         if mode not in ('r', 'w'):
             raise ValueError("Unsupported open mode '%s'" % mode)
 
-        if mode == 'r':
-            s3_key = self.fs.get_key(self.path)
-            if not s3_key:
-                raise FileNotFoundException(
-                    "Could not find file at %s" % self.path)
-
-            fileobj = ReadableS3File(s3_key)
-            return self.format.pipe_reader(fileobj)
-        else:
+        if mode != 'r':
             return self.format.pipe_writer(AtomicS3File(self.path, self.fs, **self.s3_options))
+
+        s3_key = self.fs.get_key(self.path)
+        if not s3_key:
+            raise FileNotFoundException(
+                "Could not find file at %s" % self.path)
+
+        fileobj = ReadableS3File(s3_key)
+        return self.format.pipe_reader(fileobj)
 
 
 class S3FlagTarget(S3Target):

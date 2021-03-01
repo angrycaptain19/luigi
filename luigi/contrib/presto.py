@@ -83,8 +83,7 @@ class PrestoClient:
                     self._status = status
 
             if _mode == Mode.fetch:
-                for row in cursor.fetchall():
-                    yield row
+                yield from cursor.fetchall()
 
 
 class WithPrestoClient(Register):

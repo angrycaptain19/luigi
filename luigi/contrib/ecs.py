@@ -89,7 +89,7 @@ def _track_tasks(task_ids, cluster):
     """Poll task status until STOPPED"""
     while True:
         statuses = _get_task_statuses(task_ids, cluster)
-        if all([status == 'STOPPED' for status in statuses]):
+        if all(status == 'STOPPED' for status in statuses):
             logger.info('ECS tasks {0} STOPPED'.format(','.join(task_ids)))
             break
         time.sleep(POLL_TIME)
@@ -175,17 +175,21 @@ class ECSTask(luigi.Task):
 
         # Submit the task to AWS ECS and get assigned task ID
         # (list containing 1 string)
-        if self.command:
-            overrides = {'containerOverrides': self.command}
-        else:
-            overrides = {}
+        overrides = {'containerOverrides': self.command} if self.command else {}
         response = client.run_task(taskDefinition=self.task_def_arn,
                                    overrides=overrides,
                                    cluster=self.cluster)
 
         if response['failures']:
-            raise Exception(", ".join(["fail to run task {0} reason: {1}".format(failure['arn'], failure['reason'])
-                                       for failure in response['failures']]))
+            raise Exception(
+                ", ".join(
+                    "fail to run task {0} reason: {1}".format(
+                        failure['arn'], failure['reason']
+                    )
+                    for failure in response['failures']
+                )
+            )
+
 
         self._task_ids = [task['taskArn'] for task in response['tasks']]
 

@@ -166,9 +166,7 @@ class GCSClient(luigi.target.FileSystem):
         response = request.execute()
 
         while response is not None:
-            for it in response.get('items', []):
-                yield it
-
+            yield from response.get('items', [])
             request = self.client.objects().list_next(request, response)
             if request is None:
                 break

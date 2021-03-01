@@ -53,9 +53,11 @@ class DatadogMetricsCollector(MetricsCollector):
 
     def handle_task_disabled(self, task, config):
         title = "Luigi: A task has been disabled!"
-        lines = ['A task has been disabled in the pipeline named: {name}.']
-        lines.append('The task has failed {failures} times in the last {window}')
-        lines.append('seconds, so it is being disabled for {persist} seconds.')
+        lines = [
+            'A task has been disabled in the pipeline named: {name}.',
+            'The task has failed {failures} times in the last {window}',
+            'seconds, so it is being disabled for {persist} seconds.',
+        ]
 
         preformated_text = ' '.join(lines)
 
@@ -108,11 +110,10 @@ class DatadogMetricsCollector(MetricsCollector):
         statsd.increment(namespaced_metric, value, tags=all_tags)
 
     def _format_task_params_to_tags(self, task):
-        params = []
-        for key, value in task.params.items():
-            params.append("{key}:{value}".format(key=key, value=value))
-
-        return params
+        return [
+            "{key}:{value}".format(key=key, value=value)
+            for key, value in task.params.items()
+        ]
 
     @property
     def default_tags(self):
@@ -122,6 +123,6 @@ class DatadogMetricsCollector(MetricsCollector):
         default_tags.append(env_tag)
 
         if self._config.default_tags:
-            default_tags = default_tags + str.split(self._config.default_tags, ',')
+            default_tags += str.split(self._config.default_tags, ',')
 
         return default_tags

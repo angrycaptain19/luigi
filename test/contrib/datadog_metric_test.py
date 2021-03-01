@@ -25,11 +25,7 @@ class DatadogMetricTest(unittest.TestCase):
             time.time = self.time
 
     def startTask(self, scheduler=None):
-        if scheduler:
-            s = scheduler
-        else:
-            s = self.s
-
+        s = scheduler or self.s
         s.add_task(worker=WORKER, task_id='DDTaskID', family='DDTaskName')
         task = s._state.get_task('DDTaskID')
 

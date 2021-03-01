@@ -211,17 +211,17 @@ class TestSMTPEmail(unittest.TestCase, NotificationFixture):
         and check that sendmail is properly called.
         """
 
-        smtp_kws = {"host": "my.smtp.local",
-                    "port": 999,
-                    "local_hostname": "ptms",
-                    "timeout": 1200}
-
         with mock.patch('smtplib.SMTP') as SMTP:
             with mock.patch('luigi.notifications.generate_email') as generate_email:
                 generate_email.return_value\
                     .as_string.return_value = self.mocked_email_msg
 
                 notifications.send_email_smtp(*self.notification_args)
+
+                smtp_kws = {"host": "my.smtp.local",
+                            "port": 999,
+                            "local_hostname": "ptms",
+                            "timeout": 1200}
 
                 SMTP.assert_called_once_with(**smtp_kws)
                 SMTP.return_value.login.assert_called_once_with("Robin", "dooH")
@@ -244,17 +244,17 @@ class TestSMTPEmail(unittest.TestCase, NotificationFixture):
         and check that sendmail is properly called without also calling
         starttls.
         """
-        smtp_kws = {"host": "my.smtp.local",
-                    "port": 999,
-                    "local_hostname": "ptms",
-                    "timeout": 1200}
-
         with mock.patch('smtplib.SMTP') as SMTP:
             with mock.patch('luigi.notifications.generate_email') as generate_email:
                 generate_email.return_value \
                     .as_string.return_value = self.mocked_email_msg
 
                 notifications.send_email_smtp(*self.notification_args)
+
+                smtp_kws = {"host": "my.smtp.local",
+                            "port": 999,
+                            "local_hostname": "ptms",
+                            "timeout": 1200}
 
                 SMTP.assert_called_once_with(**smtp_kws)
                 self.assertEqual(SMTP.return_value.starttls.called, False)
@@ -276,11 +276,6 @@ class TestSMTPEmail(unittest.TestCase, NotificationFixture):
         Call notifications.send_email_smtp when it cannot connect to smtp server (socket.error)
         starttls.
         """
-        smtp_kws = {"host": "my.smtp.local",
-                    "port": 999,
-                    "local_hostname": "ptms",
-                    "timeout": 1200}
-
         with mock.patch('smtplib.SMTP') as SMTP:
             with mock.patch('luigi.notifications.generate_email') as generate_email:
                 SMTP.side_effect = socket.error()
@@ -291,6 +286,11 @@ class TestSMTPEmail(unittest.TestCase, NotificationFixture):
                     notifications.send_email_smtp(*self.notification_args)
                 except socket.error:
                     self.fail("send_email_smtp() raised expection unexpectedly")
+
+                smtp_kws = {"host": "my.smtp.local",
+                            "port": 999,
+                            "local_hostname": "ptms",
+                            "timeout": 1200}
 
                 SMTP.assert_called_once_with(**smtp_kws)
                 self.assertEqual(notifications.generate_email.called, False)

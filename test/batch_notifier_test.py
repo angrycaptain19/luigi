@@ -326,7 +326,7 @@ class BatchNotifierTest(unittest.TestCase):
         bn = BatchNotifier(batch_mode='all')
         bn.add_failure('Task(a=5)', 'Task', {'a': 5}, 'error', [])
 
-        for i in range(60):
+        for _ in range(60):
             bn.update()
             self.send_email.assert_not_called()
             self.incr_time(minutes=1)
@@ -341,7 +341,7 @@ class BatchNotifierTest(unittest.TestCase):
         bn = BatchNotifier(batch_mode='all')
         bn.add_disable('Task(a=5)', 'Task', {'a': 5}, [])
 
-        for i in range(60):
+        for _ in range(60):
             bn.update()
             self.send_email.assert_not_called()
             self.incr_time(minutes=1)
@@ -355,13 +355,13 @@ class BatchNotifierTest(unittest.TestCase):
     def test_no_auto_send_until_end_of_interval_with_error(self):
         bn = BatchNotifier(batch_mode='all')
 
-        for i in range(90):
+        for _ in range(90):
             bn.update()
             self.send_email.assert_not_called()
             self.incr_time(minutes=1)
 
         bn.add_failure('Task(a=5)', 'Task', {'a': 5}, 'error', [])
-        for i in range(30):
+        for _ in range(30):
             bn.update()
             self.send_email.assert_not_called()
             self.incr_time(minutes=1)
@@ -383,7 +383,7 @@ class BatchNotifierTest(unittest.TestCase):
         self.send_email.reset_mock()
         self.send_email.side_effect = None
         bn.add_failure('Task(a=5)', 'Task', {'a': 5}, 'error', [])
-        for i in range(60):
+        for _ in range(60):
             bn.update()
             self.send_email.assert_not_called()
             self.incr_time(minutes=1)

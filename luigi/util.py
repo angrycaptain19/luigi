@@ -239,9 +239,13 @@ def common_params(task_instance, task_cls):
     task_cls_param_names = task_cls_params_dict.keys()
     common_param_names = set(task_instance_param_names).intersection(set(task_cls_param_names))
     common_param_vals = [(key, task_cls_params_dict[key]) for key in common_param_names]
-    common_kwargs = dict((key, task_instance.param_kwargs[key]) for key in common_param_names)
-    vals = dict(task_instance.get_param_values(common_param_vals, [], common_kwargs))
-    return vals
+    common_kwargs = {
+        key: task_instance.param_kwargs[key] for key in common_param_names
+    }
+
+    return dict(
+        task_instance.get_param_values(common_param_vals, [], common_kwargs)
+    )
 
 
 class inherits:
@@ -445,7 +449,7 @@ def previous(task):
 
     previous_params.update(previous_date_params)
 
-    if len(previous_date_params) == 0:
+    if not previous_date_params:
         raise NotImplementedError("No task parameter - can't determine previous task")
     elif len(previous_date_params) > 1:
         raise NotImplementedError("Too many date-related task parameters - can't determine previous task")

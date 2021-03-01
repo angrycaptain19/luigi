@@ -327,7 +327,7 @@ class SGEJobTask(luigi.Task):
             elif 'E' in sge_status:
                 logger.error('Job has FAILED:\n' + '\n'.join(self._fetch_task_failures()))
                 break
-            elif sge_status == 't' or sge_status == 'u':
+            elif sge_status in ['t', 'u']:
                 # Then the job could either be failed or done.
                 errors = self._fetch_task_failures()
                 if not errors:

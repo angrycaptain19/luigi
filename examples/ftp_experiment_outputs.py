@@ -89,10 +89,10 @@ class ProcessingTask(luigi.Task):
             values = line.split(" ")
             avg += float(values[2])
             sumval += float(values[3])
-            elements = elements + 1
+            elements += 1
 
         # average
-        avg = avg / elements
+        avg /= elements
 
         # save calculated values
         with self.output().open('w') as outfile:

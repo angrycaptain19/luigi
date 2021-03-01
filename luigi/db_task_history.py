@@ -119,13 +119,12 @@ class DbTaskHistory(task_history.TaskHistory):
                 task_record = session.query(TaskRecord).get(task.record_id)
                 if not task_record:
                     raise Exception("Task with record_id, but no matching Task record!")
-                yield (task_record, session)
             else:
                 task_record = TaskRecord(task_id=task._task.id, name=task.task_family, host=task.host)
                 for k, v in task.parameters.items():
                     task_record.parameters[k] = TaskParameter(name=k, value=v)
                 session.add(task_record)
-                yield (task_record, session)
+            yield (task_record, session)
             if task.host:
                 task_record.host = task.host
         task.record_id = task_record.id

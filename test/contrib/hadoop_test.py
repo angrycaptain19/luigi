@@ -206,9 +206,7 @@ class CommonTests:
     def test_map_only(test_case):
         job = MapOnlyJob(use_hdfs=test_case.use_hdfs)
         luigi.build([job], local_scheduler=True)
-        c = []
-        for line in job.output().open('r'):
-            c.append(line.strip())
+        c = [line.strip() for line in job.output().open('r')]
         test_case.assertEqual(c[0], 'kj')
         test_case.assertEqual(c[4], 'ljoi')
 
@@ -216,9 +214,7 @@ class CommonTests:
     def test_unicode_job(test_case):
         job = UnicodeJob(use_hdfs=test_case.use_hdfs)
         luigi.build([job], local_scheduler=True)
-        c = []
-        for line in job.output().open('r'):
-            c.append(line)
+        c = [line for line in job.output().open('r')]
         # Make sure unicode('test') isnt grouped with str('test')
         # Since this is what happens when running on cluster
         test_case.assertEqual(len(c), 2)
@@ -228,9 +224,7 @@ class CommonTests:
     def test_use_json_as_data_interchange_format_job(test_case):
         job = UseJsonAsDataInteterchangeFormatJob(use_hdfs=test_case.use_hdfs)
         luigi.build([job], local_scheduler=True)
-        c = []
-        for line in job.output().open('r'):
-            c.append(line)
+        c = [line for line in job.output().open('r')]
         test_case.assertEqual(c, ['{"data type": "json"}\n'])
 
     @staticmethod
@@ -246,8 +240,7 @@ class MapreduceLocalTest(unittest.TestCase):
     use_hdfs = False
 
     def run_and_check(self, args):
-        run_exit_status = luigi.run(['--local-scheduler', '--no-lock'] + args)
-        return run_exit_status
+        return luigi.run(['--local-scheduler', '--no-lock'] + args)
 
     def test_run(self):
         CommonTests.test_run(self)
@@ -438,10 +431,10 @@ class JobRunnerTest(unittest.TestCase):
 
     def test_tracking_url_captured_on_fail(self):
         url = 'http://tracking/'
-        err_lines = [
-            'The url to track the job: %s\n' % url,
-        ]
         with self.assertRaises(luigi.contrib.hadoop.HadoopJobError):
+            err_lines = [
+                'The url to track the job: %s\n' % url,
+            ]
             self._run_and_track(err_lines, 1)
         self.assertEqual([url], self.tracking_urls)
 

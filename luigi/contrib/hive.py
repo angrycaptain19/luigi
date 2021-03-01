@@ -173,23 +173,23 @@ class HiveCommandClient(HiveClient):
             stdout = run_hive_cmd("""use %s; show partitions %s partition
                                 (%s)""" % (database, table, self.partition_spec(partition)))
 
-            if stdout:
-                return True
-            else:
-                return False
+            return bool(stdout)
 
     def table_schema(self, table, database='default'):
         describe = run_hive_cmd("use {0}; describe {1}".format(database, table))
         if not describe or "does not exist" in describe:
             return None
-        return [tuple([x.strip() for x in line.strip().split("\t")]) for line in describe.strip().split("\n")]
+        return [
+            tuple(x.strip() for x in line.strip().split("\t"))
+            for line in describe.strip().split("\n")
+        ]
 
     def partition_spec(self, partition):
         """
         Turns a dict into the a Hive partition specification string.
         """
-        return ','.join(["`{0}`='{1}'".format(k, v) for (k, v) in
-                         sorted(partition.items(), key=operator.itemgetter(0))])
+        return ','.join("`{0}`='{1}'".format(k, v) for (k, v) in
+                             sorted(partition.items(), key=operator.itemgetter(0)))
 
 
 class ApacheHiveCommandClient(HiveCommandClient):
@@ -202,7 +202,10 @@ class ApacheHiveCommandClient(HiveCommandClient):
         describe = run_hive_cmd("use {0}; describe {1}".format(database, table), False)
         if not describe or "Table not found" in describe:
             return None
-        return [tuple([x.strip() for x in line.strip().split("\t")]) for line in describe.strip().split("\n")]
+        return [
+            tuple(x.strip() for x in line.strip().split("\t"))
+            for line in describe.strip().split("\n")
+        ]
 
 
 class MetastoreClient(HiveClient):
@@ -318,9 +321,7 @@ class WarehouseHiveClient(HiveClient):
 
     def partition_spec(self, partition):
         _validate_partition(partition)
-        return '/'.join([
-            '{}={}'.format(k, v) for (k, v) in (partition or {}).items()
-        ])
+        return '/'.join('{}={}'.format(k, v) for (k, v) in (partition or {}).items())
 
 
 def get_default_client():
@@ -383,8 +384,7 @@ class HiveQueryTask(luigi.contrib.hadoop.BaseHadoopJobTask):
         * hive.exec.reducers.bytes.per.reducer (bytes_per_reducer)
         * hive.exec.reducers.max (reducers_max)
         """
-        jcs = {}
-        jcs['mapred.job.name'] = "'" + self.task_id + "'"
+        jcs = {'mapred.job.name': "'" + self.task_id + "'"}
         if self.n_reduce_tasks is not None:
             jcs['mapred.reduce.tasks'] = self.n_reduce_tasks
         if self.pool is not None:

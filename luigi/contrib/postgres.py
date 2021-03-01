@@ -220,9 +220,7 @@ class PostgresTarget(luigi.Target):
         try:
             cursor.execute(sql)
         except psycopg2.ProgrammingError as e:
-            if e.pgcode == psycopg2.errorcodes.DUPLICATE_TABLE:
-                pass
-            else:
+            if e.pgcode != psycopg2.errorcodes.DUPLICATE_TABLE:
                 raise
         connection.close()
 
@@ -296,7 +294,7 @@ class CopyToTable(rdbms.CopyToTable):
 
         Normally you don't want to override this.
         """
-        if not (self.table and self.columns):
+        if not self.table or not self.columns:
             raise Exception("table and columns need to be specified")
 
         connection = self.output().connect()
@@ -304,9 +302,7 @@ class CopyToTable(rdbms.CopyToTable):
         # to a temporary file for import using postgres COPY
         tmp_dir = luigi.configuration.get_config().get('postgres', 'local-tmp-dir', None)
         tmp_file = tempfile.TemporaryFile(dir=tmp_dir)
-        n = 0
-        for row in self.rows():
-            n += 1
+        for n, row in enumerate(self.rows(), start=1):
             if n % 100000 == 0:
                 logger.info("Wrote %d lines", n)
             rowstr = self.column_separator.join(self.map_column(val) for val in row)
@@ -328,13 +324,12 @@ class CopyToTable(rdbms.CopyToTable):
                 if self.enable_metadata_columns:
                     self.post_copy_metacolumns(cursor)
             except psycopg2.ProgrammingError as e:
-                if e.pgcode == psycopg2.errorcodes.UNDEFINED_TABLE and attempt == 0:
-                    # if first attempt fails with "relation not found", try creating table
-                    logger.info("Creating table %s", self.table)
-                    connection.reset()
-                    self.create_table(connection)
-                else:
+                if e.pgcode != psycopg2.errorcodes.UNDEFINED_TABLE or attempt != 0:
                     raise
+                # if first attempt fails with "relation not found", try creating table
+                logger.info("Creating table %s", self.table)
+                connection.reset()
+                self.create_table(connection)
             else:
                 break
 

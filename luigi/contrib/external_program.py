@@ -102,8 +102,7 @@ class ExternalProgramTask(luigi.Task):
 
         :return: dict mapping environment variable names to values
         """
-        env = os.environ.copy()
-        return env
+        return os.environ.copy()
 
     @property
     def always_log_stderr(self):
@@ -153,9 +152,8 @@ class ExternalProgramTask(luigi.Task):
 
                 if stdout:
                     logger.info('Program stdout:\n{}'.format(stdout))
-                if stderr:
-                    if self.always_log_stderr or not success:
-                        logger.info('Program stderr:\n{}'.format(stderr))
+                if stderr and (self.always_log_stderr or not success):
+                    logger.info('Program stderr:\n{}'.format(stderr))
             else:
                 stdout, stderr = None, None
 
@@ -245,7 +243,10 @@ class ExternalProgramRunError(RuntimeError):
         info += '\nSTDERR: {}'.format(self.err or '[empty]')
         env_string = None
         if self.env:
-            env_string = ' '.join(['='.join([k, '\'{}\''.format(v)]) for k, v in self.env.items()])
+            env_string = ' '.join(
+                '='.join([k, '\'{}\''.format(v)]) for k, v in self.env.items()
+            )
+
         info += '\nENVIRONMENT: {}'.format(env_string or '[empty]')
         # reset terminal color in case the ENVIRONMENT changes colors
         info += '\033[m'
